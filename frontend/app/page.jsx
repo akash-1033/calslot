@@ -28,7 +28,17 @@ export default function Dashboard() {
     fetchData()
   }, [])
 
-  const upcomingBookings = bookings.filter((b) => new Date(b.date + " " + b.time) > new Date())
+  const now = new Date()
+
+const upcomingBookings = bookings.filter(
+  (b) =>
+    b.status === "CONFIRMED" &&
+    new Date(b.startTime) > now
+)
+const confirmedBookings = bookings.filter(
+  (b) => b.status === "CONFIRMED"
+)
+
 
   if (loading) {
     return (
@@ -71,7 +81,7 @@ export default function Dashboard() {
             <Clock className="w-4 h-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{bookings.length}</div>
+            <div className="text-2xl font-bold text-gray-900">{confirmedBookings.length}</div>
           </CardContent>
         </Card>
       </div>
