@@ -1,6 +1,6 @@
 import express from "express";
 import { prisma } from "../prismaClient.js";
-import { generateSlots } from "..utils/slotGenerator.js";
+import { generateSlots } from "../utils/slotGenerator.js";
 
 const router = express.Router();
 
@@ -14,7 +14,12 @@ router.get("/", async (req, res) => {
     where: { id: Number(eventTypeId) },
   });
 
+  if (!eventType) {
+    return res.status(404).json({ error: "Event type not found" });
+  }
+
   const availability = await prisma.availability.findMany();
+
   const bookings = await prisma.booking.findMany({
     where: {
       eventTypeId: Number(eventTypeId),
