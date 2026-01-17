@@ -1,10 +1,13 @@
 {
-  "name": "backend",
+  "name": "calslot-backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "CalSlot Backend API",
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "dev": "node index.js",
+    "start": "node index.js",
+    "build": "prisma generate",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -17,5 +20,8 @@
     "express": "^5.2.1",
     "luxon": "^3.7.2",
     "prisma": "^6.19.2"
+  },
+  "engines": {
+    "node": "18.x || 20.x || 22.x"
   }
 }
