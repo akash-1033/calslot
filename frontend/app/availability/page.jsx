@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getAvailability, saveAvailability } from "@/lib/api/availability"
 
+/* ================= CONSTANTS ================= */
+
 const DAYS = [
   { key: "monday", label: "Monday" },
   { key: "tuesday", label: "Tuesday" },
@@ -33,12 +35,45 @@ const TIMEZONES = [
 ]
 
 const DEFAULT_AVAILABILITY = {
-  monday: { enabled: true, start: "09:00", end: "18:00" },
-  tuesday: { enabled: true, start: "09:00", end: "18:00" },
-  wednesday: { enabled: true, start: "09:00", end: "18:00" },
-  thursday: { enabled: true, start: "09:00", end: "18:00" },
-  friday: { enabled: true, start: "09:00", end: "18:00" },
+  monday: { enabled: false, start: "09:00", end: "18:00" },
+  tuesday: { enabled: false, start: "09:00", end: "18:00" },
+  wednesday: { enabled: false, start: "09:00", end: "18:00" },
+  thursday: { enabled: false, start: "09:00", end: "18:00" },
+  friday: { enabled: false, start: "09:00", end: "18:00" },
 }
+
+/* ================= HELPERS ================= */
+
+// Converts backend array → frontend schedule object
+function mapApiAvailabilityToSchedule(apiData) {
+  const schedule = structuredClone(DEFAULT_AVAILABILITY)
+
+  const dayMap = {
+    0: "monday",
+    1: "tuesday",
+    2: "wednesday",
+    3: "thursday",
+    4: "friday",
+  }
+
+  apiData.forEach((item) => {
+    const dayKey = dayMap[item.weekday]
+    if (!dayKey) return
+
+    schedule[dayKey] = {
+      enabled: true,
+      start: item.startTime,
+      end: item.endTime,
+    }
+  })
+
+  return {
+    schedule,
+    timezone: apiData[0]?.timezone || "Asia/Kolkata",
+  }
+}
+
+/* ================= PAGE ================= */
 
 export default function AvailabilityPage() {
   const [availability, setAvailability] = useState(DEFAULT_AVAILABILITY)
@@ -47,15 +82,16 @@ export default function AvailabilityPage() {
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
 
+  /* ---------- Load availability ---------- */
   useEffect(() => {
     async function fetchAvailability() {
       try {
         const data = await getAvailability()
-        if (data && data.schedule) {
-          setAvailability(data.schedule)
-        }
-        if (data && data.timezone) {
-          setTimezone(data.timezone)
+
+        if (Array.isArray(data)) {
+          const mapped = mapApiAvailabilityToSchedule(data)
+          setAvailability(mapped.schedule)
+          setTimezone(mapped.timezone)
         }
       } catch (error) {
         console.error("Failed to fetch availability:", error)
@@ -63,8 +99,11 @@ export default function AvailabilityPage() {
         setLoading(false)
       }
     }
+
     fetchAvailability()
   }, [])
+
+  /* ---------- Handlers ---------- */
 
   function handleDayToggle(day) {
     setAvailability((prev) => ({
@@ -89,11 +128,13 @@ export default function AvailabilityPage() {
   async function handleSave() {
     setSaving(true)
     setSaveSuccess(false)
+
     try {
       await saveAvailability({
         schedule: availability,
-        timezone: timezone,
+        timezone,
       })
+
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 3000)
     } catch (error) {
@@ -102,6 +143,8 @@ export default function AvailabilityPage() {
       setSaving(false)
     }
   }
+
+  /* ---------- UI ---------- */
 
   if (loading) {
     return (
@@ -113,12 +156,18 @@ export default function AvailabilityPage() {
 
   return (
     <div>
+      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Availability</h1>
           <p className="text-gray-600">Set your weekly available hours</p>
         </div>
-        <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
           <Save className="w-4 h-4 mr-2" />
           {saving ? "Saving..." : "Save Changes"}
         </Button>
@@ -130,7 +179,7 @@ export default function AvailabilityPage() {
         </div>
       )}
 
-      {/* Timezone Selector */}
+      {/* Timezone */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg">Timezone</CardTitle>
@@ -158,7 +207,10 @@ export default function AvailabilityPage() {
         <CardContent>
           <div className="space-y-4">
             {DAYS.map((day) => (
-              <div key={day.key} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+              <div
+                key={day.key}
+                className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg"
+              >
                 <label className="flex items-center gap-3 w-32">
                   <input
                     type="checkbox"
@@ -166,21 +218,28 @@ export default function AvailabilityPage() {
                     onChange={() => handleDayToggle(day.key)}
                     className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                   />
-                  <span className="font-medium text-gray-700">{day.label}</span>
+                  <span className="font-medium text-gray-700">
+                    {day.label}
+                  </span>
                 </label>
+
                 {availability[day.key].enabled ? (
                   <div className="flex items-center gap-2">
                     <Input
                       type="time"
                       value={availability[day.key].start}
-                      onChange={(e) => handleTimeChange(day.key, "start", e.target.value)}
+                      onChange={(e) =>
+                        handleTimeChange(day.key, "start", e.target.value)
+                      }
                       className="w-32"
                     />
                     <span className="text-gray-500">to</span>
                     <Input
                       type="time"
                       value={availability[day.key].end}
-                      onChange={(e) => handleTimeChange(day.key, "end", e.target.value)}
+                      onChange={(e) =>
+                        handleTimeChange(day.key, "end", e.target.value)
+                      }
                       className="w-32"
                     />
                   </div>
