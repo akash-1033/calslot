@@ -243,7 +243,7 @@ frontend/
 ```
 ## ✍️ Author
 
-**Akash Kumar** *Backend-focused Full Stack Developer*
+**Akash Kumar**
 
 [![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/akash-1033)
 
