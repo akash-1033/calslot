@@ -54,6 +54,8 @@ export default function BookingPage({ params }) {
         const dateStr = formatDate(selectedDate)
         const data = await getSlots(eventType.id, dateStr)
         setSlots(data)
+        console.log("SLOTS IN TIMESLOTS:", data);
+
       } catch (error) {
         console.error("Failed to fetch slots:", error)
       } finally {
@@ -93,10 +95,21 @@ export default function BookingPage({ params }) {
     e.preventDefault()
     setSubmitting(true)
     try {
+      // Parse time slot (e.g., "09:00" or "09:00 - 10:00")
+      const timeStr = selectedSlot.split(" - ")[0]
+      const [hours, minutes] = timeStr.split(":").map(Number)
+      
+      // Create start and end times
+      const startTime = new Date(selectedDate)
+      startTime.setHours(hours, minutes, 0, 0)
+      
+      const endTime = new Date(startTime)
+      endTime.setMinutes(endTime.getMinutes() + eventType.duration)
+      
       await createBooking({
         eventTypeId: eventType.id,
-        date: formatDate(selectedDate),
-        time: selectedSlot,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
         name: formData.name,
         email: formData.email,
       })

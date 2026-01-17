@@ -8,7 +8,7 @@ export function generateSlots({
   timezone,
 }) {
   const day = DateTime.fromISO(date, { zone: timezone });
-  const weekday = day.weekday % 7; // Luxon: 1–7, convert to 0–6
+  const weekday = day.weekday - 1; // Luxon: 1–7, convert to 0–6
 
   const dayAvailability = availability.find(
     (a) => a.weekday === weekday
